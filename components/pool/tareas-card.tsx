@@ -150,11 +150,24 @@ function TaskItem({
             </div>
             {open && (
                 <div className="space-y-2 px-3 pb-3 text-sm text-muted-foreground">
-                    <ol className="list-inside list-decimal space-y-1">
-                        {task.steps.map((step, i) => (
-                            <li key={i}>{step}</li>
-                        ))}
-                    </ol>
+                    <>
+                        {task.valves && (
+                            <div className="rounded-md border bg-muted/50 p-3 text-xs">
+                                <p className="text-emerald-700">
+                                    <strong>Abrir:</strong> {task.valves.open.join(", ")}
+                                </p>
+                                <p className="mt-1 text-red-700">
+                                    <strong>Cerrar:</strong> {task.valves.close.join(", ")}
+                                </p>
+                            </div>
+                        )}
+
+                        <ol className="list-inside list-decimal space-y-1">
+                            {task.steps.map((step, i) => (
+                                <li key={i}>{step}</li>
+                            ))}
+                        </ol>
+                    </>
                     {children}
                 </div>
             )}

@@ -1,6 +1,10 @@
 export interface TaskInfo {
     title: string
     steps: string[]
+    valves?: {
+        open: string[]
+        close: string[]
+    }
 }
 
 export const DAILY_TASKS: TaskInfo[] = [
@@ -15,30 +19,38 @@ export const DAILY_TASKS: TaskInfo[] = [
         title: "Lavado del filtro de arenas",
         steps: [
             "Parar la bomba antes de tocar las válvulas.",
-            "Configurar válvulas en modo Lavado.",
             "Encender la bomba durante 5 minutos.",
         ],
+        valves: {
+            open: ["Fondo", "Skimmer", "2", "3"],
+            close: ["Limpiafondos", "1", "4", "5"],
+        },
     },
     {
         title: "Limpiafondos",
         steps: [
             "Parar la bomba antes de tocar las válvulas.",
-            "Configurar válvulas en modo Limpiafondos.",
             "Cepillar escaleras y suelo.",
             "Pasar el limpiafondos, evitando que la manguera flote.",
         ],
+        valves: {
+            open: ["Limpiafondos", "1", "4"],
+            close: ["Fondo", "Skimmer", "2", "3"],
+        },
     },
     {
         title: "Limpieza de cestillos de bombas",
         steps: [
-            "Cerrar la llave B.",
+            "Cerrar las llaves B.",
             "Limpiar los cestillos.",
-            "Abrir la llave B.",
+            "Abrir las llaves B.",
         ],
     },
     {
         title: "Relleno de la piscina",
         steps: [
+            "Cerrar primera llave B desde la entrada",
+            "Abrir llave llenado 3 puntos",
             "Rellenar agua hasta la mitad del skimmer central.",
             "Analizar pH con Phenol Red.",
             "Analizar cloro libre con DPD1.",
@@ -49,9 +61,12 @@ export const DAILY_TASKS: TaskInfo[] = [
         title: "Depuración",
         steps: [
             "Parar la bomba antes de tocar las válvulas.",
-            "Configurar válvulas en modo Depuración.",
             "Encender la bomba.",
         ],
+        valves: {
+            open: ["Fondo", "Skimmer", "1", "4"],
+            close: ["Limpiafondos", "2", "3", "5"],
+        },
     },
 ]
 
@@ -72,12 +87,6 @@ export const WEEKLY_TASKS: TaskInfo[] = [
             "Evitar el contacto con el césped.",
         ],
     },
-]
-
-export const VALVE_CONFIG = [
-    { mode: "Lavado", open: "Fondo, Skimmer, 2, 3", close: "Limpiafondos, 1, 4, 5" },
-    { mode: "Limpiafondos", open: "Limpiafondos, 1, 4", close: "Fondo, Skimmer, 2, 3" },
-    { mode: "Depuración", open: "Fondo, Skimmer, 1, 4", close: "Limpiafondos, 2, 3, 5" },
 ]
 
 export const CHEM_INFO = {

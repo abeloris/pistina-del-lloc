@@ -22,11 +22,33 @@ export function HistorialView() {
         return (
           <Card key={i} className="space-y-2 p-3">
             <div className="flex items-center justify-between text-sm">
-              <span className="font-medium">
-                {r.start
-                  ? new Date(r.start).toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric" })
-                  : "Sin fecha"}
-              </span>
+              <div className="flex flex-col">
+                <span className="font-medium">
+                  {r.start
+                    ? new Date(r.start).toLocaleDateString("es-ES", {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                    })
+                    : "Sin fecha"}
+                </span>
+
+                <span className="text-xs text-muted-foreground">
+                  {r.start
+                    ? new Date(r.start).toLocaleTimeString("es-ES", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })
+                    : "--:--"}
+                  {" → "}
+                  {r.end
+                    ? new Date(r.end).toLocaleTimeString("es-ES", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })
+                    : "--:--"}
+                </span>
+              </div>
               <div className="flex gap-2">
                 <Button size="sm" variant="outline" onClick={() => edit(i)}>Editar</Button>
                 <Button size="sm" variant="destructive" onClick={() => remove(i)}>Borrar</Button>

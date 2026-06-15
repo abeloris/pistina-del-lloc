@@ -27,38 +27,94 @@ export function AnalisisCard() {
       <CardHeader>
         <CardTitle>Análisis del agua</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
+
+      <CardContent className="space-y-4">
         <div className="grid grid-cols-2 gap-3">
+
+          {/* pH */}
           <div className="space-y-1">
+            <label className="text-sm font-medium">pH</label>
             <Input
               value={active.ph}
               onChange={(e) => setField("ph", sanitize(e.target.value))}
-              placeholder="pH"
+              placeholder="Ej: 7.2"
+              inputMode="decimal"
+              step="0.1"
               className={phWarn ? "border-destructive" : ""}
             />
             <p className="text-xs text-muted-foreground">
-              Objetivo {CHEM_INFO.ph.target} ({CHEM_INFO.ph.min}–{CHEM_INFO.ph.max})
+              Rango {CHEM_INFO.ph.min}–{CHEM_INFO.ph.max}
             </p>
           </div>
+
+          {/* Cloro libre */}
           <div className="space-y-1">
+            <label className="text-sm font-medium">Cloro libre (ppm)</label>
             <Input
               value={active.clLibre}
               onChange={(e) => setField("clLibre", sanitize(e.target.value))}
-              placeholder="Cl libre (ppm)"
+              placeholder="Ej: 1.5"
+              inputMode="decimal"
+              step="0.1"
               className={clWarn ? "border-destructive" : ""}
             />
             <p className="text-xs text-muted-foreground">
               Objetivo {CHEM_INFO.cloro.target} ppm ({CHEM_INFO.cloro.min}–{CHEM_INFO.cloro.max})
             </p>
           </div>
-          <Input value={active.clTotal} onChange={(e) => setField("clTotal", sanitize(e.target.value))} placeholder="Cl total (ppm)" />
-          <Input readOnly value={active.clComb} className="bg-muted" placeholder="Cl combinado" />
-          <Input value={active.depurada} onChange={(e) => setField("depurada", sanitize(e.target.value))} placeholder="m³ depurada" />
-          <Input value={active.renovada} onChange={(e) => setField("renovada", sanitize(e.target.value))} placeholder="m³ renovada" />
+
+          {/* Cloro total */}
+          <div className="space-y-1">
+            <label className="text-sm font-medium">Cloro total (ppm)</label>
+            <Input
+              value={active.clTotal}
+              onChange={(e) => setField("clTotal", sanitize(e.target.value))}
+              placeholder="Ej: 2.0"
+              inputMode="decimal"
+              step="0.1"
+            />
+          </div>
+
+          {/* Cloro combinado */}
+          <div className="space-y-1">
+            <label className="text-sm font-medium">Cloro combinado</label>
+            <Input
+              readOnly
+              value={active.clComb}
+              className="bg-muted"
+            />
+          </div>
+
+          {/* Depurada */}
+          <div className="space-y-1">
+            <label className="text-sm font-medium">Agua depurada (m³)</label>
+            <Input
+              value={active.depurada}
+              onChange={(e) => setField("depurada", sanitize(e.target.value))}
+              placeholder="Ej: 10"
+              inputMode="decimal"
+              min={0}
+              step="0.1"
+            />
+          </div>
+
+          {/* Renovada */}
+          <div className="space-y-1">
+            <label className="text-sm font-medium">Agua renovada (m³)</label>
+            <Input
+              value={active.renovada}
+              onChange={(e) => setField("renovada", sanitize(e.target.value))}
+              placeholder="Ej: 2"
+              inputMode="decimal"
+              min={0}
+              step="0.1"
+            />
+          </div>
         </div>
 
+        {/* Transparencia */}
         <div className="flex items-center justify-between rounded-lg border p-3">
-          <span className="text-sm">Transparencia del agua</span>
+          <span className="text-sm font-medium">Transparencia del agua</span>
           <div className="flex gap-2">
             <Button
               size="sm"

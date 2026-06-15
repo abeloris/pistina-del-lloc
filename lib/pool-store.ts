@@ -1,4 +1,5 @@
 "use client"
+
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
 import { DAILY_TASKS, WEEKLY_TASKS } from "./pool-data"
@@ -39,12 +40,51 @@ const EMPTY: PoolRecord = {
 
 type Mode = "create" | "edit"
 
+const pad = (n: number) => String(n).padStart(2, "0")
+
+const nowTime = () => {
+    const d = new Date()
+    return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
+}
+
+const today = () => {
+    const d = new Date()
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+}
+
+const build = (date: string) => `${date}T${nowTime()}`
+
+/**
+ * IMPORTANT:
+ * Keep everything in LOCAL time (avoid UTC shift from toISOString)
+ */
+const toLocalISO = (d: Date) => {
+    const pad = (n: number) => String(n).padStart(2, "0")
+
+    return (
+        `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}` +
+        `T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
+    )
+}
+
+const recalc = (r: PoolRecord): PoolRecord => {
+    const l = parseFloat(r.clLibre)
+    const t = parseFloat(r.clTotal)
+
+    return {
+        ...r,
+        clComb: !isNaN(l) && !isNaN(t) ? Math.max(0, t - l).toFixed(2) : "",
+    }
+}
+
 interface Store {
     active: PoolRecord
     historial: PoolRecord[]
     mode: Mode
     editingIndex: number | null
+
     startNew: () => void
+    finishDay: () => void
     setField: <K extends keyof PoolRecord>(k: K, v: PoolRecord[K]) => void
     toggleCheck: (i: number) => void
     setImage: (k: "img1" | "img2", v: string) => void
@@ -52,16 +92,7 @@ interface Store {
     exportData: () => void
     editRecord: (i: number) => void
     deleteRecord: (i: number) => void
-    finishDay: () => void
     reset: () => void
-}
-
-function recalcClComb(active: PoolRecord): PoolRecord {
-    const libre = parseFloat(active.clLibre)
-    const total = parseFloat(active.clTotal)
-    const clComb =
-        !isNaN(libre) && !isNaN(total) ? Math.max(0, total - libre).toFixed(2) : ""
-    return { ...active, clComb }
 }
 
 export const usePoolStore = create<Store>()(
@@ -73,15 +104,36 @@ export const usePoolStore = create<Store>()(
             editingIndex: null,
 
             startNew() {
-                set({
-                    active: { ...EMPTY, start: new Date().toISOString() },
-                    mode: "create",
-                    editingIndex: null,
+                set((s) => ({
+                    active: {
+                        ...s.active,
+                        start: build(s.active.start?.slice(0, 10) || today()),
+                    },
+                }))
+            },
+
+            finishDay() {
+                set((s) => {
+                    if (!s.active.start) return s
+
+                    const date = s.active.start.slice(0, 10)
+
+                    return {
+                        active: {
+                            ...s.active,
+                            end: build(date),
+                        },
+                    }
                 })
             },
 
             setField(k, v) {
-                set((s) => ({ active: recalcClComb({ ...s.active, [k]: v }) }))
+                set((s) => ({
+                    active: recalc({
+                        ...s.active,
+                        [k]: v,
+                    }),
+                }))
             },
 
             toggleCheck(i) {
@@ -93,58 +145,89 @@ export const usePoolStore = create<Store>()(
             },
 
             setImage(k, v) {
-                set((s) => ({ active: { ...s.active, [k]: v } }))
+                set((s) => ({
+                    active: {
+                        ...s.active,
+                        [k]: v,
+                    },
+                }))
             },
 
             save() {
                 const { active, historial, mode, editingIndex } = get()
-                if (mode === "create") {
-                    const updated = [...historial, active]
-                    set({ historial: updated, active: { ...EMPTY }, mode: "create", editingIndex: null })
-                } else if (mode === "edit" && editingIndex !== null) {
-                    const updated = [...historial]
-                    updated[editingIndex] = active
-                    set({ historial: updated, active: { ...EMPTY }, mode: "create", editingIndex: null })
+
+                if (!active.start) return
+
+                if (mode === "edit" && editingIndex !== null) {
+                    const h = [...historial]
+                    h[editingIndex] = active
+
+                    set({
+                        historial: h,
+                        active: { ...EMPTY },
+                        mode: "create",
+                        editingIndex: null,
+                    })
+                    return
                 }
+
+                set({
+                    historial: [...historial, active],
+                    active: { ...EMPTY },
+                    mode: "create",
+                    editingIndex: null,
+                })
             },
 
             exportData() {
-                const data = get().historial
-                const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" })
+                const blob = new Blob(
+                    [JSON.stringify(get().historial, null, 2)],
+                    { type: "application/json" }
+                )
+
+                const url = URL.createObjectURL(blob)
                 const a = document.createElement("a")
-                a.href = URL.createObjectURL(blob)
+
+                a.href = url
                 a.download = "historial_piscina.json"
                 a.click()
+
+                URL.revokeObjectURL(url)
             },
 
             editRecord(i) {
                 const item = get().historial[i]
                 if (!item) return
-                set({ active: item, mode: "edit", editingIndex: i })
+
+                set({
+                    active: { ...item },
+                    mode: "edit",
+                    editingIndex: i,
+                })
             },
 
             deleteRecord(i) {
-                const updated = [...get().historial]
-                updated.splice(i, 1)
-                set({ historial: updated })
-            },
-
-            finishDay() {
-                set((s) => ({ active: { ...s.active, end: new Date().toISOString() } }))
+                set((s) => ({
+                    historial: s.historial.filter((_, idx) => idx !== i),
+                }))
             },
 
             reset() {
-                set({ active: { ...EMPTY }, mode: "create", editingIndex: null })
+                set({
+                    active: { ...EMPTY },
+                    mode: "create",
+                    editingIndex: null,
+                })
             },
         }),
         {
             name: "piscina-storage",
             skipHydration: true,
-            partialize: (state) => ({
-                active: state.active,
-                historial: state.historial,
-                mode: state.mode,
-                editingIndex: state.editingIndex,
+            partialize: (s) => ({
+                active: s.active,
+                historial: s.historial,
+                mode: s.mode,
+                editingIndex: s.editingIndex,
             }),
         }
     )
