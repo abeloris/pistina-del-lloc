@@ -8,8 +8,9 @@ import { usePoolStore } from "@/lib/pool-store"
 const pad = (n: number) => String(n).padStart(2, "0")
 
 const toLocalString = (d: Date) =>
-  `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}` +
-  `T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
+  `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(
+    d.getHours()
+  )}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
 
 export function JornadaCard() {
   const active = usePoolStore((s) => s.active)
@@ -29,38 +30,34 @@ export function JornadaCard() {
   const endTime = active.end ? active.end.slice(11, 16) : ""
 
   const updateDate = (value: string) => {
-    if (!active.start) return
+    const update = (source: string) => {
+      const date = source ? new Date(source) : new Date()
 
-    const start = new Date(active.start)
-    const [year, month, day] = value.split("-").map(Number)
+      const [year, month, day] = value.split("-").map(Number)
 
-    start.setFullYear(year)
-    start.setMonth(month - 1)
-    start.setDate(day)
+      date.setFullYear(year)
+      date.setMonth(month - 1)
+      date.setDate(day)
 
-    const updatedStart = toLocalString(start)
-    setField("start", updatedStart)
+      return toLocalString(date)
+    }
+
+    setField("start", update(active.start))
 
     if (active.end) {
-      const end = new Date(active.end)
-
-      end.setFullYear(year)
-      end.setMonth(month - 1)
-      end.setDate(day)
-
-      setField("end", toLocalString(end))
+      setField("end", update(active.end))
     }
   }
 
   const updateTime = (field: "start" | "end", value: string) => {
-    const current = active[field]
-    if (!current) return
+    const source = active[field]
+    const date = source ? new Date(source) : new Date()
 
-    const date = new Date(current)
     const [hours, minutes] = value.split(":").map(Number)
 
     date.setHours(hours)
     date.setMinutes(minutes)
+    date.setSeconds(0)
 
     setField(field, toLocalString(date))
   }
@@ -82,7 +79,6 @@ export function JornadaCard() {
           <input
             type="date"
             value={dateValue}
-            disabled={!active.start}
             onChange={(e) => updateDate(e.target.value)}
             className="w-auto rounded-md border px-3 py-2 text-center"
           />
@@ -92,7 +88,6 @@ export function JornadaCard() {
           <input
             type="time"
             value={startTime}
-            disabled={!active.start}
             onChange={(e) => updateTime("start", e.target.value)}
             className="rounded-md border px-2 py-1"
           />
@@ -102,18 +97,13 @@ export function JornadaCard() {
           <input
             type="time"
             value={endTime}
-            disabled={!active.end}
             onChange={(e) => updateTime("end", e.target.value)}
             className="rounded-md border px-2 py-1"
           />
         </div>
 
         <div className="flex gap-2">
-          <Button
-            className="flex-1"
-            onClick={startNew}
-            disabled={status === "running"}
-          >
+          <Button className="flex-1" onClick={startNew}>
             Iniciar
           </Button>
 
@@ -121,7 +111,6 @@ export function JornadaCard() {
             className="flex-1"
             variant="secondary"
             onClick={finishDay}
-            disabled={status !== "running"}
           >
             Finalizar
           </Button>

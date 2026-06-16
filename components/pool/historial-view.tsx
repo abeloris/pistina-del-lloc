@@ -35,7 +35,7 @@ export function HistorialView() {
   const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    importJson(file).catch(() => {})
+    importJson(file).catch(() => { })
     e.target.value = ""
   }
 
@@ -122,27 +122,40 @@ export function HistorialView() {
               return (
                 <Card key={realIndex} className="p-3 space-y-2">
 
-                  <div className="flex flex-col">
+                  <div className="flex gap-4">
                     <span className="font-medium text-sm">
                       {r.start
                         ? new Date(r.start).toLocaleDateString("es-ES")
                         : "Sin fecha"}
                     </span>
 
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-m">
                       {r.start
                         ? new Date(r.start).toLocaleTimeString("es-ES", {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })
                         : "--:--"}{" "}
                       →{" "}
                       {r.end
                         ? new Date(r.end).toLocaleTimeString("es-ES", {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })
                         : "--:--"}
+                    </span>
+                    <span>
+                      {r.start && r.end
+                        ? (() => {
+                          const diffMs = new Date(r.end).getTime() - new Date(r.start).getTime();
+                          const hours = Math.floor(diffMs / (1000 * 60 * 60));
+                          const minutes = Math.floor(
+                            (diffMs % (1000 * 60 * 60)) / (1000 * 60)
+                          );
+
+                          return `${hours}h ${minutes.toString().padStart(2, "0")}m`;
+                        })()
+                        : "--"}
                     </span>
                   </div>
 
