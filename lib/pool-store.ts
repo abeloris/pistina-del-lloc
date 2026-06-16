@@ -20,6 +20,7 @@ export interface PoolRecord {
     img1: string
     img2: string
     filtroTimerEnd: number | null
+    analisisNotas: string
 }
 
 type Mode = "create" | "edit"
@@ -29,6 +30,10 @@ interface PoolStore {
     historial: PoolRecord[]
     mode: Mode
     editingIndex: number | null
+
+    openTaskIndex: number | null
+
+    setOpenTaskIndex: (i: number | null) => void
 
     startNew: () => void
     finishDay: () => void
@@ -61,6 +66,7 @@ const EMPTY: PoolRecord = {
     img1: "",
     img2: "",
     filtroTimerEnd: null,
+    analisisNotas: "",
 }
 
 const pad = (n: number) => String(n).padStart(2, "0")
@@ -94,12 +100,17 @@ export const usePoolStore = create<PoolStore>()(
             historial: [],
             mode: "create",
             editingIndex: null,
+            openTaskIndex: null,
+
+            setOpenTaskIndex(i) {
+                set({ openTaskIndex: i })
+            },
 
             startNew() {
                 set((s) => ({
                     active: {
                         ...s.active,
-                        start: build(s.active.start?.slice(0, 10) || today()),
+                        start: build(today()),
                     },
                 }))
             },
@@ -173,44 +184,36 @@ export const usePoolStore = create<PoolStore>()(
             },
 
             exportJson() {
-                const blob = new Blob(
-                    [JSON.stringify(get().historial, null, 2)],
-                    { type: "application/json" }
-                )
+                const blob = new Blob([JSON.stringify(get().historial, null, 2)], {
+                    type: "application/json",
+                })
                 const url = URL.createObjectURL(blob)
                 const a = document.createElement("a")
                 a.href = url
-                a.download = "historial_piscina.json"
+                a.download = "historial.json"
                 a.click()
-                URL.revokeObjectURL(url)
+            },
+
+            exportJornadaCsv() {
+                const data = get().historial
+                const rows = data.map(r => {
+                    if (!r.start || !r.end) return ""
+                    const d = new Date(r.start)
+                    return `${d.toLocaleDateString()},${r.start},${r.end}`
+                }).filter(Boolean)
+
+                const csv = ["date,start,end", ...rows].join("\n")
+                const blob = new Blob([csv], { type: "text/csv" })
+                const url = URL.createObjectURL(blob)
+                const a = document.createElement("a")
+                a.href = url
+                a.download = "jornadas.csv"
+                a.click()
             },
 
             exportJornadaTxt() {
-                const data = get().historial
-
-                const pad = (n: number) => String(n).padStart(2, "0")
-
-                const date = (iso: string) => {
-                    const d = new Date(iso)
-                    return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}`
-                }
-
-                const time = (iso: string) => {
-                    const d = new Date(iso)
-                    return `${pad(d.getHours())}:${pad(d.getMinutes())}`
-                }
-
-                const hours = (s: string, e: string) => {
-                    const h = (new Date(e).getTime() - new Date(s).getTime()) / 3600000
-                    return `${Math.max(0, h) % 1 === 0 ? h : h.toFixed(1)}h`
-                }
-
-                const text = data
-                    .map((r) =>
-                        r.start && r.end
-                            ? `Dia ${date(r.start)} Inicio ${time(r.start)} Fin ${time(r.end)} Horas ${hours(r.start, r.end)}`
-                            : ""
-                    )
+                const text = get().historial
+                    .map(r => r.start && r.end ? `${r.start} - ${r.end}` : "")
                     .filter(Boolean)
                     .join("\n")
 
@@ -218,65 +221,34 @@ export const usePoolStore = create<PoolStore>()(
                 const url = URL.createObjectURL(blob)
                 const a = document.createElement("a")
                 a.href = url
-                a.download = "jornadas_piscina.txt"
+                a.download = "jornadas.txt"
                 a.click()
-                URL.revokeObjectURL(url)
-            },
-
-            exportJornadaCsv() {
-                const data = get().historial
-
-                const rows = data
-                    .map((r) => {
-                        if (!r.start || !r.end) return ""
-                        const d = new Date(r.start)
-                        const date = `${pad(d.getDate())}/${pad(d.getMonth() + 1)}`
-                        const start = `${pad(d.getHours())}:${pad(d.getMinutes())}`
-                        const end = `${pad(new Date(r.end).getHours())}:${pad(new Date(r.end).getMinutes())}`
-                        const hours =
-                            (new Date(r.end).getTime() - new Date(r.start).getTime()) / 3600000
-
-                        return `${date},${start},${end},${hours.toFixed(2)}`
-                    })
-                    .filter(Boolean)
-
-                const csv = ["dia,inicio,fin,horas", ...rows].join("\n")
-
-                const blob = new Blob([csv], { type: "text/csv" })
-                const url = URL.createObjectURL(blob)
-                const a = document.createElement("a")
-                a.href = url
-                a.download = "jornadas_piscina.csv"
-                a.click()
-                URL.revokeObjectURL(url)
             },
 
             importJson(file) {
-                return new Promise((resolve, reject) => {
+                return new Promise((res, rej) => {
                     const reader = new FileReader()
                     reader.onload = () => {
                         try {
-                            const parsed = JSON.parse(reader.result as string)
-                            if (!Array.isArray(parsed)) return reject("invalid")
-                            set({ historial: parsed })
-                            resolve()
+                            const data = JSON.parse(reader.result as string)
+                            set({ historial: data })
+                            res()
                         } catch (e) {
-                            reject(e)
+                            rej(e)
                         }
                     }
-                    reader.onerror = reject
                     reader.readAsText(file)
                 })
             },
         }),
         {
             name: "piscina-storage",
-            skipHydration: true,
             partialize: (s) => ({
                 active: s.active,
                 historial: s.historial,
                 mode: s.mode,
                 editingIndex: s.editingIndex,
+                openTaskIndex: s.openTaskIndex,
             }),
         }
     )
