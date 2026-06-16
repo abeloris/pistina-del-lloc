@@ -20,7 +20,6 @@ export interface PoolRecord {
     img1: string
     img2: string
     filtroTimerEnd: number | null
-    analisisNotas: string
 }
 
 type Mode = "create" | "edit"
@@ -32,7 +31,6 @@ interface PoolStore {
     editingIndex: number | null
 
     openTaskIndex: number | null
-
     setOpenTaskIndex: (i: number | null) => void
 
     startNew: () => void
@@ -66,7 +64,6 @@ const EMPTY: PoolRecord = {
     img1: "",
     img2: "",
     filtroTimerEnd: null,
-    analisisNotas: "",
 }
 
 const pad = (n: number) => String(n).padStart(2, "0")
@@ -100,6 +97,7 @@ export const usePoolStore = create<PoolStore>()(
             historial: [],
             mode: "create",
             editingIndex: null,
+
             openTaskIndex: null,
 
             setOpenTaskIndex(i) {
@@ -136,9 +134,9 @@ export const usePoolStore = create<PoolStore>()(
 
             toggleCheck(i) {
                 set((s) => {
-                    const checks = [...s.active.checks]
-                    checks[i] = !checks[i]
-                    return { active: { ...s.active, checks } }
+                    const c = [...s.active.checks]
+                    c[i] = !c[i]
+                    return { active: { ...s.active, checks: c } }
                 })
             },
 
@@ -195,14 +193,11 @@ export const usePoolStore = create<PoolStore>()(
             },
 
             exportJornadaCsv() {
-                const data = get().historial
-                const rows = data.map(r => {
-                    if (!r.start || !r.end) return ""
-                    const d = new Date(r.start)
-                    return `${d.toLocaleDateString()},${r.start},${r.end}`
-                }).filter(Boolean)
+                const rows = get().historial
+                    .map(r => r.start && r.end ? `${r.start},${r.end}` : "")
+                    .filter(Boolean)
 
-                const csv = ["date,start,end", ...rows].join("\n")
+                const csv = ["start,end", ...rows].join("\n")
                 const blob = new Blob([csv], { type: "text/csv" })
                 const url = URL.createObjectURL(blob)
                 const a = document.createElement("a")
@@ -230,8 +225,7 @@ export const usePoolStore = create<PoolStore>()(
                     const reader = new FileReader()
                     reader.onload = () => {
                         try {
-                            const data = JSON.parse(reader.result as string)
-                            set({ historial: data })
+                            set({ historial: JSON.parse(reader.result as string) })
                             res()
                         } catch (e) {
                             rej(e)
