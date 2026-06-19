@@ -322,45 +322,7 @@ export function TareasCard() {
                         )}
 
                         {i === 1 && <FiltroTimer />}
-
-                        {i === 4 && (
-                            <div className="grid grid-cols-3 gap-2 pt-2">
-
-                                <div className="flex flex-col">
-                                    <label className="text-sm text-black mb-1">pH</label>
-                                    <Input
-                                        placeholder="7.2 - 7.8"
-                                        value={active.ph}
-                                        inputMode="decimal"
-                                        step="0.1"
-                                        onChange={(e) => setField("ph", sanitize(e.target.value))}
-                                    />
-                                </div>
-
-                                <div className="flex flex-col">
-                                    <label className="text-sm text-black mb-1">Cl libre</label>
-                                    <Input
-                                        placeholder="0.5 - 2"
-                                        value={active.clLibre}
-                                        inputMode="decimal"
-                                        step="0.1"
-                                        onChange={(e) => setField("clLibre", sanitize(e.target.value))}
-                                    />
-                                </div>
-
-                                <div className="flex flex-col">
-                                    <label className="text-sm text-black mb-1">Cl total</label>
-                                    <Input
-                                        placeholder="0.5 - 2"
-                                        value={active.clTotal}
-                                        inputMode="decimal"
-                                        step="0.1"
-                                        onChange={(e) => setField("clTotal", sanitize(e.target.value))}
-                                    />
-                                </div>
-
-                            </div>
-                        )}
+                        
                     </TaskItem>
                 ))}
 
