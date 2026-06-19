@@ -101,7 +101,7 @@ export function AnalisisCard() {
             <Input
               value={active.depurada}
               onChange={(e) => setField("depurada", sanitize(e.target.value))}
-              placeholder="Ej: 10"
+              placeholder="Ej: 232323"
               inputMode="decimal"
               min={0}
               step="0.1"
@@ -123,7 +123,7 @@ export function AnalisisCard() {
             <Input
               value={active.renovada}
               onChange={(e) => setField("renovada", sanitize(e.target.value))}
-              placeholder="Ej: 2"
+              placeholder="Ej: 15126"
               inputMode="decimal"
               min={0}
               step="0.1"
